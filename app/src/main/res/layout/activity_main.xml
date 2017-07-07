@@ -6,9 +6,15 @@
     android:layout_height="match_parent"
     tools:context="com.dublick.tutorial03.MainActivity">
 
-    <com.dublick.tutorial03.graph.GLView
-        android:id="@+id/gl_view"
+    <FrameLayout
+        android:id="@+id/flContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+    </FrameLayout>
+    <!--<com.dublick.tutorial03.graph.GLView-->
+        <!--android:id="@+id/gl_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent" />-->
 
 </android.support.constraint.ConstraintLayout>

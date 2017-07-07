@@ -1,5 +1,6 @@
 package com.dublick.tutorial03;
 
+import android.app.FragmentManager;
 import android.content.res.Configuration;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,18 +20,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        glView = (GLView) findViewById(R.id.gl_view);
+//        glView = (GLView) findViewById(R.id.gl_view);
 
-        final DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//        final DisplayMetrics displayMetrics = new DisplayMetrics();
+//        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//
+//        glView.setRenderer(displayMetrics.density);
+        Fragment_PlyViewer fragment_plyViewer = new Fragment_PlyViewer();
 
-        glView.setRenderer(displayMetrics.density);
+        FragmentManager fragmentManager = this.getFragmentManager();
+        fragmentManager.beginTransaction().add(R.id.flContent, fragment_plyViewer).commit();
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        glView.onResume();
+//        glView.onResume();
     }
 
     @Override
