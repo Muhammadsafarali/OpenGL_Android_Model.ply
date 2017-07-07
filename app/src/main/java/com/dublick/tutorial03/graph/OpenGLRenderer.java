@@ -10,6 +10,7 @@ import com.dublick.tutorial03.R;
 import com.dublick.tutorial03.utils.Constant;
 import com.dublick.tutorial03.utils.ShaderUtils;
 
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -41,8 +42,10 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
     public volatile float deltaX;
     public volatile float deltaY;
+    public volatile float scale = 0.009f;
 
-    private HeightMap heightMap;
+//    private HeightMap heightMap;
+    private Mesh mesh;
 
     private final float[] mProjectionMatrix = new float[16];
     private final float[] mViewMatrix = new float[16];
@@ -103,7 +106,8 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        heightMap = new HeightMap();
+//        heightMap = new HeightMap();
+        mesh = new Mesh();
 
         glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
         glEnable(GLES20.GL_DEPTH_TEST);
@@ -166,6 +170,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(temporaryMatrix, 0, mModelMatrix, 0, accumulatedRotation, 0);
         System.arraycopy(temporaryMatrix, 0, mModelMatrix, 0, 16);
 
+        Matrix.scaleM(mModelMatrix, 0, scale, scale, scale);
         Matrix.multiplyMM(mvpMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
         glUniformMatrix4fv(mvMatrixUniform, 1, false, mvpMatrix, 0);
 
@@ -176,7 +181,92 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
         glUniform3f(lightPosUniform, lightPosInEyeSpace[0], lightPosInEyeSpace[1], lightPosInEyeSpace[2]);
 
-        heightMap.render();
+//        heightMap.render();
+        mesh.render();
+    }
+
+    class Mesh {
+        final int[] vbo = new int[1];
+        final int[] ibo = new int[1];
+
+        int indexCount;
+
+        Mesh() {
+            PlyLoader plyLoader = new PlyLoader();
+            try {
+                final float[] vertexData = plyLoader.getVertex(context.getResources().openRawResource(R.raw.girl3));
+                final short[] indexData = plyLoader.getIndexList();
+                indexCount = indexData.length;
+
+                final FloatBuffer heightMapVertexDataBuffer = ByteBuffer
+                        .allocateDirect(vertexData.length * BYTES_PER_FLOAT).order(ByteOrder.nativeOrder())
+                        .asFloatBuffer();
+                heightMapVertexDataBuffer.put(vertexData).position(0);
+
+                final ShortBuffer heightMapIndexDataBuffer = ByteBuffer
+                        .allocateDirect(indexData.length * BYTES_PER_SHORT).order(ByteOrder.nativeOrder())
+                        .asShortBuffer();
+                heightMapIndexDataBuffer.put(indexData).position(0);
+
+                GLES20.glGenBuffers(1, vbo, 0);
+                GLES20.glGenBuffers(1, ibo, 0);
+
+                if (vbo[0] > 0 && ibo[0] > 0) {
+                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo[0]);
+                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, heightMapVertexDataBuffer.capacity() * BYTES_PER_FLOAT,
+                            heightMapVertexDataBuffer, GLES20.GL_STATIC_DRAW);
+
+                    GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
+                    GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, heightMapIndexDataBuffer.capacity()
+                            * BYTES_PER_SHORT, heightMapIndexDataBuffer, GLES20.GL_STATIC_DRAW);
+
+                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                    GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+                } else {
+//                    errorHandler.handleError(ErrorType.BUFFER_CREATION_ERROR, "glGenBuffers");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        void render() {
+            if (vbo[0] > 0 && ibo[0] > 0) {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo[0]);
+
+                // Bind Attributes
+                GLES20.glVertexAttribPointer(positionAttribute, POSITION_DATA_SIZE_IN_ELEMENTS, GLES20.GL_FLOAT, false,
+                        STRIDE, 0);
+                GLES20.glEnableVertexAttribArray(positionAttribute);
+
+                GLES20.glVertexAttribPointer(normalAttribute, NORMAL_DATA_SIZE_IN_ELEMENTS, GLES20.GL_FLOAT, false,
+                        STRIDE, POSITION_DATA_SIZE_IN_ELEMENTS * BYTES_PER_FLOAT);
+                GLES20.glEnableVertexAttribArray(normalAttribute);
+
+                GLES20.glVertexAttribPointer(colorAttribute, COLOR_DATA_SIZE_IN_ELEMENTS, GLES20.GL_FLOAT, false,
+                        STRIDE, (POSITION_DATA_SIZE_IN_ELEMENTS + NORMAL_DATA_SIZE_IN_ELEMENTS) * BYTES_PER_FLOAT);
+                GLES20.glEnableVertexAttribArray(colorAttribute);
+
+                // Draw
+                GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
+                GLES20.glDrawElements(GLES20.GL_TRIANGLES, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
+
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+            }
+        }
+
+        void release() {
+            if (vbo[0] > 0) {
+                GLES20.glDeleteBuffers(vbo.length, vbo, 0);
+                vbo[0] = 0;
+            }
+
+            if (ibo[0] > 0) {
+                GLES20.glDeleteBuffers(ibo.length, ibo, 0);
+                ibo[0] = 0;
+            }
+        }
     }
 
     class HeightMap {

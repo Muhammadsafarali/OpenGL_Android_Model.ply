@@ -5,6 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 
 /**
  * Created by 3dium on 06.07.2017.
@@ -13,6 +14,7 @@ import android.view.MotionEvent;
 public class GLView extends GLSurfaceView{
 
     private OpenGLRenderer renderer;
+    ScaleGestureDetector SGD;
     private float mPreviousX;
     private float mPreviousY;
 
@@ -24,9 +26,9 @@ public class GLView extends GLSurfaceView{
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
 
-
         renderer = new OpenGLRenderer(context);
         setRenderer(renderer);
+        SGD = new ScaleGestureDetector(context, new ScaleListener());
     }
 
 
@@ -61,5 +63,13 @@ public class GLView extends GLSurfaceView{
     public void setRenderer(float density)
     {
         this.density = density;
+    }
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            renderer.scale *= detector.getScaleFactor();
+            return true;
+        }
     }
 }
