@@ -40,7 +40,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
     private Context context;
     private int programId;
 
-    private static final float MODEL_BOUND_SIZE = 50f;
+    private static final float MODEL_BOUND_SIZE = 80f;
 
     private float rotateAngleX;
     private float rotateAngleY;
@@ -146,7 +146,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
         // init view matrix
         rotateAngleX = 0;
-        rotateAngleY = 0;
+        rotateAngleY = 180;
         translateX = 0f;
         translateY = 0f;
         translateZ = -MODEL_BOUND_SIZE * 1.5f;
