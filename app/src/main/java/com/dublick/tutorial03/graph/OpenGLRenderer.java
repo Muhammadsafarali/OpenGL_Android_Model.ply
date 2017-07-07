@@ -166,7 +166,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         colorAttribute = GLES20.glGetAttribLocation(programId, Constant.COLOR_ATTRIBUTE);
 
         Matrix.setIdentityM(lightModelMatrix, 0);
-        Matrix.translateM(lightModelMatrix, 0, 0.0f, 7000.5f, -8.0f);
+        Matrix.translateM(lightModelMatrix, 0, 100.0f, 7.5f, -8.0f);
 
         Matrix.multiplyMV(lightPosInWorldSpace, 0, lightModelMatrix, 0, lightPosInWorldSpace, 0);
         Matrix.multiplyMV(lightPosInEyeSpace, 0, mViewMatrix, 0, lightPosInWorldSpace, 0);
