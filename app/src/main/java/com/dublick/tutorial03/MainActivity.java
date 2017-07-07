@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         Fragment_PlyViewer fragment_plyViewer = new Fragment_PlyViewer();
 
         FragmentManager fragmentManager = this.getFragmentManager();
-        fragmentManager.beginTransaction().add(fragment_plyViewer, "tag").commit();
+        fragmentManager.beginTransaction().add(R.id.flContent, fragment_plyViewer).commit();
 
     }
 
