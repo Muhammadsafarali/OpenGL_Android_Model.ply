@@ -40,9 +40,17 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
     private Context context;
     private int programId;
 
+    private static final float MODEL_BOUND_SIZE = 50f;
+
+    private float rotateAngleX;
+    private float rotateAngleY;
+    private float translateX;
+    private float translateY;
+    private float translateZ;
+
     public volatile float deltaX;
     public volatile float deltaY;
-    public volatile float scale = 0.009f;
+    public volatile float scale = 0.09f;
 
 //    private HeightMap heightMap;
     private Mesh mesh;
@@ -135,6 +143,14 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         final float far = 1000.0f;
 
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
+
+        // init view matrix
+        rotateAngleX = 0;
+        rotateAngleY = 0;
+        translateX = 0f;
+        translateY = 0f;
+        translateZ = -MODEL_BOUND_SIZE * 1.5f;
+        updateViewMatrix();
     }
 
     @Override
@@ -150,7 +166,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         colorAttribute = GLES20.glGetAttribLocation(programId, Constant.COLOR_ATTRIBUTE);
 
         Matrix.setIdentityM(lightModelMatrix, 0);
-        Matrix.translateM(lightModelMatrix, 0, 0.0f, 7.5f, -8.0f);
+        Matrix.translateM(lightModelMatrix, 0, 100.0f, 7.5f, -8.0f);
 
         Matrix.multiplyMV(lightPosInWorldSpace, 0, lightModelMatrix, 0, lightPosInWorldSpace, 0);
         Matrix.multiplyMV(lightPosInEyeSpace, 0, mViewMatrix, 0, lightPosInWorldSpace, 0);
@@ -158,14 +174,14 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -12f);
 
-        Matrix.setIdentityM(currentRotation, 0);
-        Matrix.rotateM(currentRotation, 0, deltaX, 0.0f, 1.0f, 0.0f);
-        Matrix.rotateM(currentRotation, 0, deltaY, 1.0f, 0.0f, 0.0f);
-        deltaX = 0.0f;
-        deltaY = 0.0f;
-
-        Matrix.multiplyMM(temporaryMatrix, 0, currentRotation, 0, accumulatedRotation, 0);
-        System.arraycopy(temporaryMatrix, 0, accumulatedRotation, 0, 16);
+//        Matrix.setIdentityM(currentRotation, 0);
+//        Matrix.rotateM(currentRotation, 0, deltaX, 0.0f, 1.0f, 0.0f);
+//        Matrix.rotateM(currentRotation, 0, deltaY, 1.0f, 0.0f, 0.0f);
+//        deltaX = 0.0f;
+//        deltaY = 0.0f;
+//
+//        Matrix.multiplyMM(temporaryMatrix, 0, currentRotation, 0, accumulatedRotation, 0);
+//        System.arraycopy(temporaryMatrix, 0, accumulatedRotation, 0, 16);
 
         Matrix.multiplyMM(temporaryMatrix, 0, mModelMatrix, 0, accumulatedRotation, 0);
         System.arraycopy(temporaryMatrix, 0, mModelMatrix, 0, 16);
@@ -185,6 +201,30 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         mesh.render();
     }
 
+    public void translate(float dx, float dy, float dz) {
+        final float translateScaleFactor = MODEL_BOUND_SIZE / 200f;
+        translateX += dx * translateScaleFactor;
+        translateY += dy * translateScaleFactor;
+        if (dz != 0f) {
+            translateZ /= dz;
+        }
+        updateViewMatrix();
+    }
+
+    public void rotate(float aX, float aY) {
+        final float rotateScaleFactor = 0.5f;
+        rotateAngleX -= aX * rotateScaleFactor;
+        rotateAngleY += aY * rotateScaleFactor;
+        updateViewMatrix();
+    }
+
+    private void updateViewMatrix() {
+        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, translateZ, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.translateM(mViewMatrix, 0, -translateX, -translateY, 0f);
+        Matrix.rotateM(mViewMatrix, 0, rotateAngleX, 1f, 0f, 0f);
+        Matrix.rotateM(mViewMatrix, 0, rotateAngleY, 0f, 1f, 0f);
+    }
+
     class Mesh {
         final int[] vbo = new int[1];
         final int[] ibo = new int[1];
@@ -194,7 +234,7 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         Mesh() {
             PlyLoader plyLoader = new PlyLoader();
             try {
-                final float[] vertexData = plyLoader.getVertex(context.getResources().openRawResource(R.raw.girl3));
+                final float[] vertexData = plyLoader.getVertex(context.getResources().openRawResource(R.raw.girl));
                 final short[] indexData = plyLoader.getIndexList();
                 indexCount = indexData.length;
 
